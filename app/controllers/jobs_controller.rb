@@ -16,13 +16,18 @@ class JobsController < ApplicationController
 
   # POST /jobs
   def create
-    @job = Job.new(job_params)
+    image = params[:image]
+    filename = image.original_filename
 
-    if @job.save
-      render json: @job, status: :created, location: @job
-    else
-      render json: @job.errors, status: :unprocessable_entity
-    end
+    # Salvar a imagem usando o Active Storage
+    blob = ActiveStorage::Blob.create_after_upload!(
+      io: image,
+      filename: filename
+    )
+    image = blob.create_variant(resize: "800x800").processed
+
+    render json: { url: url_for(image) }
+  end
   end
 
   # PATCH/PUT /jobs/1
